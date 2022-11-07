@@ -1,6 +1,10 @@
 <script lang="ts" setup>
-import MyIcon from '@/assets/svg_test.svg?component';
+import { useCounterStore } from '@/stores/counter'
+
+const userCount = useCounterStore()
+import MyIcon from "@/assets/svg_test.svg?component";
 const drawer = ref(false)
+const direction = ref('rtl')
 const open1 = () => {
   ElNotification({
     title: 'Success',
@@ -27,13 +31,13 @@ const handleClose = (done: () => void) => {
       width="125"
       height="125"/>
     <i-teenyicons-360-outline style="font-size: 1.5em; color: #ff6a00" />
-    <h1>This is an about page</h1>
+    <h1 class="animate-bounce">This is an about page</h1>
     <el-button plain @click="open1"> Closes automatically </el-button>
     <el-button :plain="true" @click="open">Show message</el-button>
     <el-button type="primary" style="margin-left: 16px" @click="drawer = true">
       open
     </el-button>
-
+    <el-button @click="userCount.increment">increment</el-button>
     <el-drawer
       v-model="drawer"
       title="I am the title"
@@ -42,6 +46,7 @@ const handleClose = (done: () => void) => {
     >
       <span>Hi, there!</span>
     </el-drawer>
+    <span> {{userCount.count}}</span>
   </div>
 </template>
 

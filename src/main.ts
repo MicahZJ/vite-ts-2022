@@ -6,8 +6,7 @@ import router from "./router";
 
 import "./assets/main.css";
 
-import "element-plus/theme-chalk/el-message-box.css";// messageBox的样式
-import "element-plus/theme-chalk/el-overlay.css";// 遮罩层样式
+import 'virtual:windi.css'
 
 const app = createApp(App);
 

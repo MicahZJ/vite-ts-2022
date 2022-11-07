@@ -19,11 +19,15 @@ import Icons from 'unplugin-icons/vite'
 // 自动按需引入图标库
 import IconsResolver from 'unplugin-icons/resolver'
 
+// 引入windiCss
+import WindiCSS from 'vite-plugin-windicss'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
+    WindiCSS(),
     svgLoader(),
     legacy({
       targets: ['defaults', 'not IE 11'],

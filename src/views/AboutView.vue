@@ -1,36 +1,34 @@
 <script lang="ts" setup>
-import { useCounterStore } from '@/stores/counter'
-
-const userCount = useCounterStore()
-import MyIcon from "@/assets/svg_test.svg?component";
-const drawer = ref(false)
-const direction = ref('rtl')
+import { useCounterStore } from "@/stores/counter";
+import { isDark, toggleDark } from "@/utils/dark";
+const userCount = useCounterStore();
+import MyIcon from "@//assets/svg_test.svg";
+const drawer = ref(false);
+const direction = ref("rtl");
 const open1 = () => {
   ElNotification({
-    title: 'Success',
-    message: 'This is a success message',
-    type: 'success',
-  })
-}
+    title: "Success",
+    message: "This is a success message",
+    type: "success",
+  });
+};
 const open = () => {
-  ElMessage('this is a message.')
-}
+  ElMessage("this is a message.");
+};
 const handleClose = (done: () => void) => {
-  ElMessageBox.confirm('Are you sure you want to close this?')
+  ElMessageBox.confirm("Are you sure you want to close this?")
     .then(() => {
-      done()
+      done();
     })
     .catch(() => {
       // catch error
-    })
-}
+    });
+};
 </script>
 <template>
   <div class="about">
-    <MyIcon
-      width="125"
-      height="125"/>
-    <i-teenyicons-360-outline style="font-size: 1.5em; color: #ff6a00" />
+    <MyIcon width="125" height="125" />
+    <i-uil-0-plus style="font-size: 1.5em; color: #ff6a00" />
     <h1 class="animate-bounce">This is an about page</h1>
     <el-button plain @click="open1"> Closes automatically </el-button>
     <el-button :plain="true" @click="open">Show message</el-button>
@@ -46,7 +44,12 @@ const handleClose = (done: () => void) => {
     >
       <span>Hi, there!</span>
     </el-drawer>
-    <span> {{userCount.count}}</span>
+    <el-button type="danger">Danger</el-button>
+    <span class="text-red-400 dark:text-green-400"> {{ userCount.count }}</span>
+    <button class="icon-btn mx-2 !outline-none" @click="toggleDark()">
+      <i-ph-cloud-moon-bold v-if="isDark" class="icon-footer" />
+      <i-ph-sun-horizon-bold v-else class="icon-footer" />
+    </button>
   </div>
 </template>
 

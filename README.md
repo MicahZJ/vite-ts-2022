@@ -466,129 +466,134 @@ export default showCodeMessage;
 
 ## VueUse
 VueUse 是一个响应式的 Vue 实用程序的合集，使用它，我们可以把各种各样的东西变成响应式而不用我们手动编写 hook
-安装配置
-npm i npm i @vueuse/core -D
-复制代码
+### 安装配置
+`npm i npm i @vueuse/core -D`
+
 安装完依赖后，我们还需要在 vite.config.ts 中配置 自动按需引入
+```
 import { VueUseComponentsResolver } from 'unplugin-vue-components/resolvers';
 
 export default defineConfig({
-plugins: [
-AutoImport({
-imports: ['@vueuse/core'],
-}),
-Components({
-resolvers: [VueUseComponentsResolver()],
-}),
-],
+  plugins: [
+    AutoImport({
+      imports: ['@vueuse/core'],
+    }),
+    Components({
+      resolvers: [VueUseComponentsResolver()],
+    }),
+  ],
 });
-复制代码
+```
 这样配置完之后，我们就不需要再自己去引入方法，可以直接使用啦
-NProgress
+## NProgress
 这个插件相信大部分人都有用过，它可以帮助我们在顶部加上页面加载提示：一个加载进度条和一个转的圈
-安装配置
-npm i --save nprogress
-复制代码
+### 安装配置
+`npm i --save nprogress`
+
 我们因为用着 typescript 所以还需要安装它的 types
-npm i @types/nprogress -D
-复制代码
+`npm i @types/nprogress -D`
+
 安装完之后，我门回到 src/router/index.ts 配置我们的路由守卫
+```
 import NProgress from 'nprogress';
 router.beforeEach((to, from) => {
-if (!NProgress.isStarted()) {
-NProgress.start();
-}
+  if (!NProgress.isStarted()) {
+      NProgress.start();
+  }
 });
 
 router.afterEach((to, from) => {
-NProgress.done();
+  NProgress.done();
 });
-复制代码
+
+```
 我们再在 src/assets/styles 目录下新建 nprogress.scss 文件配置如下：
+```
 /* Make clicks pass-through */
 #nprogress {
-pointer-events: none;
+  pointer-events: none;
 }
 
 #nprogress .bar {
-background: $theme-color;
+  background: $theme-color;
 
-position: fixed;
-z-index: 1031;
-top: 0;
-left: 0;
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
 
-width: 100%;
-height: 2px;
+  width: 100%;
+  height: 2px;
 }
 
 /* Fancy blur effect */
 #nprogress .peg {
-display: block;
-position: absolute;
-right: 0px;
-width: 100px;
-height: 100%;
-box-shadow: 0 0 10px $theme-color, 0 0 5px $theme-color;
-opacity: 1.0;
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px $theme-color, 0 0 5px $theme-color;
+  opacity: 1.0;
 
--webkit-transform: rotate(3deg) translate(0px, -4px);
--ms-transform: rotate(3deg) translate(0px, -4px);
-transform: rotate(3deg) translate(0px, -4px);
+  -webkit-transform: rotate(3deg) translate(0px, -4px);
+  -ms-transform: rotate(3deg) translate(0px, -4px);
+  transform: rotate(3deg) translate(0px, -4px);
 }
 
 /* Remove these to get rid of the spinner */
 #nprogress .spinner {
-display: block;
-position: fixed;
-z-index: 1031;
-top: 15px;
-right: 15px;
+  display: block;
+  position: fixed;
+  z-index: 1031;
+  top: 15px;
+  right: 15px;
 }
 
 #nprogress .spinner-icon {
-width: 18px;
-height: 18px;
-box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
 
-border: solid 2px transparent;
-border-top-color: $theme-color;
-border-left-color: $theme-color;
-border-radius: 50%;
+  border: solid 2px transparent;
+  border-top-color: $theme-color;
+  border-left-color: $theme-color;
+  border-radius: 50%;
 
--webkit-animation: nprogress-spinner 400ms linear infinite;
-animation: nprogress-spinner 400ms linear infinite;
+  -webkit-animation: nprogress-spinner 400ms linear infinite;
+  animation: nprogress-spinner 400ms linear infinite;
 }
 
 .nprogress-custom-parent {
-overflow: hidden;
-position: relative;
+  overflow: hidden;
+  position: relative;
 }
 
 .nprogress-custom-parent #nprogress .spinner,
 .nprogress-custom-parent #nprogress .bar {
-position: absolute;
+  position: absolute;
 }
 
 @-webkit-keyframes nprogress-spinner {
-0% {
--webkit-transform: rotate(0deg);
-}
+  0% {
+    -webkit-transform: rotate(0deg);
+  }
 
-100% {
--webkit-transform: rotate(360deg);
-}
+  100% {
+    -webkit-transform: rotate(360deg);
+  }
 }
 
 @keyframes nprogress-spinner {
-0% {
-transform: rotate(0deg);
-}
+  0% {
+    transform: rotate(0deg);
+  }
 
-100% {
-transform: rotate(360deg);
+  100% {
+    transform: rotate(360deg);
+  }
 }
-}
+```
 
 ## Customize configuration
 

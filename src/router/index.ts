@@ -20,4 +20,15 @@ const router = createRouter({
   ],
 });
 
+import NProgress from "nprogress";
+router.beforeEach((to, from) => {
+  if (!NProgress.isStarted()) {
+    NProgress.start();
+  }
+});
+
+router.afterEach((to, from) => {
+  NProgress.done();
+});
+
 export default router;

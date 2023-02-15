@@ -31,7 +31,7 @@ vite 创建一个 vue3 + typescript 基本项目的指令：
 
 项目建立过程如下
 
-![img.png](img.png)
+![img.png](https://github.com/MicahZJ/vite-ts-2022/blob/main/img.png)
 
 ### 配置 vite 服务设置
 我们配置 vite.config.ts ，加入以下配置
@@ -273,11 +273,11 @@ export default {
 ```
 使用示例
 我们先打开网址：https://icones.js.org/ 随便选择一个图标
-![img_2.png](img_2.png)
+![img_2.png](https://github.com/MicahZJ/vite-ts-2022/blob/main/img_2.png)
 
 然后点击复制
 
-![img_1.png](img_1.png)
+![img_1.png](https://github.com/MicahZJ/vite-ts-2022/blob/main/img_1.png)
 回到我们的代码中，只需要短短的一句就可以使用了：
 ```
 <template>
@@ -286,7 +286,7 @@ export default {
 ```
 效果如下
 
-![img_3.png](img_3.png)
+![img_3.png](https://github.com/MicahZJ/vite-ts-2022/blob/main/img_3.png)
 ## Pinia
 
 Pinia.js 是新一代的状态管理工具，可以认为它是下一代的 Vuex，即 Vuex5.x；它相比于 Vuex 有几个比较明显的变化：

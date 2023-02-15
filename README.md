@@ -31,7 +31,7 @@ vite 创建一个 vue3 + typescript 基本项目的指令：
 
 项目建立过程如下
 
-![img.png](img.png)
+![img.png](https://github.com/MicahZJ/vite-ts-2022/blob/main/img.png)
 
 ### 配置 vite 服务设置
 我们配置 vite.config.ts ，加入以下配置

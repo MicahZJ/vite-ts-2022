@@ -165,6 +165,17 @@ module.exports = {
   ],
 }
 ```
+### 使用 unplugin-vue-components
+不需要再导入components文件夹里的内容
+直接使用就行,比如src/components/HelloWorld.vue,直接在html页面直接使用
+```
+<hello-world/>
+```
+### 使用 unplugin-auto-import
+在生成auto-import.d.ts文件后，我们可以看到里面有很多指令，只要在里面生成的指令，
+
+比如ref， 我们不需要再使用`import {ref} from 'vue'`
+直接在js页面使用就行
 ## Element Plus
 
 ### 安装配置

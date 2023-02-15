@@ -3,6 +3,9 @@ import { useCounterStore } from "@/stores/counter";
 import { isDark, toggleDark } from "@/utils/dark";
 const userCount = useCounterStore();
 import MyIcon from "@//assets/svg_test.svg";
+import HelloWorld from "@/components/HelloWorld.vue";
+import TheWelcome from "@/components/TheWelcome.vue";
+
 const drawer = ref(false);
 const direction = ref("rtl");
 const open1 = () => {
@@ -50,6 +53,7 @@ const handleClose = (done: () => void) => {
       <i-ph-cloud-moon-bold v-if="isDark" class="icon-footer" />
       <i-ph-sun-horizon-bold v-else class="icon-footer" />
     </button>
+    <hello-world />
   </div>
 </template>
 

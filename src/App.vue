@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import zhCn from 'element-plus/lib/locale/lang/zh-cn';
+import zhCn from "element-plus/lib/locale/lang/zh-cn";
 const locale = zhCn;
 
-import MyIcon from '@/assets/logo.svg?component';
+import MyIcon from "@/assets/logo.svg";
 </script>
 
 <template>
@@ -15,10 +15,7 @@ import MyIcon from '@/assets/logo.svg?component';
       width="125"
       height="125"
     />
-    <MyIcon
-      class="logo"
-      width="125"
-      height="125"/>
+    <MyIcon class="logo" width="125" height="125" />
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
@@ -26,10 +23,11 @@ import MyIcon from '@/assets/logo.svg?component';
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/three">three3D</RouterLink>
       </nav>
     </div>
   </header>
-  <el-config-provider  :locale="locale">
+  <el-config-provider :locale="locale">
     <RouterView />
   </el-config-provider>
 </template>

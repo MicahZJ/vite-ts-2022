@@ -1,9 +1,6 @@
 {
   "globals": {
     "EffectScope": true,
-    "ElMessage": true,
-    "ElMessageBox": true,
-    "ElNotification": true,
     "acceptHMRUpdate": true,
     "asyncComputed": true,
     "autoResetRef": true,

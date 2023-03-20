@@ -9,7 +9,7 @@ import showCodeMessage from "@/api/code";
 import { formatJsonToUrlParams, type instanceObject } from "@/utils/format";
 import axios from "axios";
 
-const BASE_PREFIX = "/api";
+const BASE_PREFIX = "http://123.60.5.92:10000/api";
 
 // 创建实例
 const axiosInstance: AxiosInstance = axios.create({
@@ -25,7 +25,7 @@ const axiosInstance: AxiosInstance = axios.create({
 
 // 请求拦截器
 axiosInstance.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config) => {
     // TODO 在这里可以加上想要在请求发送前处理的逻辑
     // TODO 比如 loading 等
     return config;

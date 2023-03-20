@@ -19,11 +19,11 @@ import MyIcon from "@/assets/logo.svg";
 
     <div class="wrapper">
       <HelloWorld msg="You did it!" />
-
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/three">three3D</RouterLink>
+        <RouterLink to="/login">login</RouterLink>
       </nav>
     </div>
   </header>

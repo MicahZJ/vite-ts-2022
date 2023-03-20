@@ -7,9 +7,6 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 export default class ThreeD {
-  private cylinderRadius: any; // 圆柱体半径
-  private cylinderOpacity: any; // 圆柱体透明度
-  private cylinderMesh: any; // 圆柱网格
   private scene: any; // 场景
   private camera: any; // 相机
   private renderer: any; // 渲染器
@@ -37,9 +34,6 @@ export default class ThreeD {
     objSize: Number,
     modelSpeed: number
   ) {
-    // this.path = path;
-    // this.objName = objName;
-    // this.mtlName = mtlName || null;
     this.cameraX = cameraX;
     this.cameraY = cameraY;
     this.cameraZ = cameraZ;
@@ -90,22 +84,13 @@ export default class ThreeD {
     this.group4 = new THREE.Group(); // 组-天目湖-光标
 
     // 创建cube简单模型
-    this.loadGlb("tianmu_lake.glb", "0", true, 1); // 天目湖
+    this.loadGlb("plane.glb", "pm", true, 1); // 平面
 
     // 创建光圈-总的
-    this.loadGlbCylinder("Cylinder2.glb", "0", true, 10, 0, 0, 0);
-    // 创建光圈-白茶馆
-    this.loadGlbCylinderNormal("Cylinder2.glb", "1", false, 10);
-    // 创建光圈-水族馆
-    this.loadGlbCylinderNormal("Cylinder2.glb", "2", false, 10);
-    // 创建光圈-电动船
-    this.loadGlbCylinderNormal("Cylinder2.glb", "3", false, 10);
-    // 创建光圈-十四澜
-    this.loadGlbCylinderNormal("Cylinder2.glb", "4", false, 10);
-    // 创建光圈-全电厨房
-    this.loadGlbCylinderNormal("Cylinder2.glb", "5", false, 10);
+    this.loadGlbCylinder("Cylinder2.glb", "cycle", true, 10, 0, 0, 0);
+
     // 标注点
-    this.loadGlbPoint("biaozhi.glb", "0", true, 20);
+    this.loadGlbPoint("biaozhi.glb", "dian", true, 20);
 
     // 把group对象添加到场景中
     this.scene.add(this.group);
@@ -132,8 +117,8 @@ export default class ThreeD {
     this.animate();
 
     // 场景坐标辅助线（选择性功能）
-    // const axesHelper = new THREE.AxesHelper(150);
-    // this.scene.add(axesHelper);
+    const axesHelper = new THREE.AxesHelper(150);
+    this.scene.add(axesHelper);
   }
   // 创建glb模型-圆柱体
   /**
@@ -290,20 +275,20 @@ export default class ThreeD {
         const model = gltf.scene;
         model.position.set(0, 0, 0); // 模型坐标偏移量xyz
         model.scale.set(scale, scale, scale);
+        //
+        // model.traverse((child: any) => {
+        //   // 设置线框材质
+        //   if (child.isMesh && child.userData.name !== "backGround") {
+        //     //这个判断模型是楼房还是其他  加载不同的材质
+        //     // 拿到模型线框的Geometry
+        //     this.setCityLineMaterial(child, name, showFlag);
+        //   }
+        //   // 设置线框材质
+        // });
 
-        model.traverse((child: any) => {
-          // 设置线框材质
-          if (child.isMesh && child.userData.name !== "backGround") {
-            //这个判断模型是楼房还是其他  加载不同的材质
-            // 拿到模型线框的Geometry
-            this.setCityLineMaterial(child, name, showFlag);
-          }
-          // 设置线框材质
-        });
-
-        // model.name = name;
-        // model.visible = showFlag;
-        // this.group.add(model);
+        model.name = name;
+        model.visible = showFlag;
+        this.group.add(model);
       },
       undefined,
       function (e) {
@@ -511,9 +496,9 @@ export default class ThreeD {
     this.scene.add(pointLight);
 
     // 灯光辅助线
-    // const sphereSize = 10;
-    // const pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
-    // this.scene.add(pointLightHelper);
+    const sphereSize = 10;
+    const pointLightHelper = new THREE.PointLightHelper(pointLight, sphereSize);
+    this.scene.add(pointLightHelper);
 
     //平行光
     // const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -548,18 +533,6 @@ export default class ThreeD {
         this.group2.scale.x = 1;
         this.group2.scale.y = 1;
         this.group2.scale.z = 1;
-      }
-
-      // 扩散动画
-      this.group3.scale.x = this.group3.scale.x + 0.1;
-      this.group3.scale.y = this.group3.scale.y - 0.01;
-      this.group3.scale.z = this.group3.scale.z + 0.1;
-
-      // console.log('圆柱123', this.group3)
-      if (this.group3.scale.x > 10) {
-        this.group3.scale.x = 1;
-        this.group3.scale.y = 1;
-        this.group3.scale.z = 1;
       }
 
       // 上下移动
@@ -607,10 +580,39 @@ export default class ThreeD {
 
     // 获取raycaster直线和所有模型相交的数组集合
     // const intersects = this.raycaster.intersectObjects( this.group.children );
-    // console.log('模型集合', intersects);
+    const myModel = this.scene.getObjectByName( 'pm' );
+    myModel.rotation.x += .1;
+    myModel.rotation.y += .1;
+    console.log('模型', myModel);
 
     //将所有的相交的模型的颜色设置为红色for ( var i = 0; i < intersects.length; i++ ) {
 
     // intersects[ i ].object.material.color.set( 0xff0000 );
+    this.cameraPosition()
   };
+
+  // 移动相机位置
+  cameraPosition() {
+    // 定义相机的初始位置和目标位置
+    const initialPosition = new THREE.Vector3( 600, 300, 100 );
+    const initialTarget = new THREE.Vector3( 400, 300, 150 );
+
+
+    // 将相机和控制器的初始位置和目标位置设置为刚才定义的位置
+    this.camera.position.copy( initialPosition );
+    this.controls.target.copy( initialTarget );
+
+    // 定义向前移动的距离
+    const distance = 0;
+
+    // 计算新的相机位置和目标位置
+    let newPosition = new THREE.Vector3();
+    let newTarget = new THREE.Vector3();
+    newPosition.copy( this.camera.position ).add( this.controls.target ).normalize().multiplyScalar( distance ).add( this.controls.target );
+    newTarget.copy( this.controls.target );
+
+    // 将相机和控制器的位置和目标位置设置为新位置
+    this.camera.position.copy( newPosition );
+    this.controls.target.copy( newTarget );
+  }
 }

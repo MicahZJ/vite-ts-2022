@@ -2,10 +2,18 @@
 import ThreeD from "../utils/threeTest";
 const dom = ref<HTMLElement | null>(null);
 
+let threeObj:any = {}
+
 onMounted(() => {
-  const three = new ThreeD(8, 50, 60, 8, 50);
-  dom.value && three.initThree(dom.value);
+  threeObj = new ThreeD(8, 50, 60, 8, 50);
+  dom.value && threeObj.initThree(dom.value);
+  // 给模型绑定事件
+  window.addEventListener( 'pointerdown', threeObj.clickObj, false );
 });
+
+onBeforeUnmount(() => {
+  window.removeEventListener( 'pointerdown', threeObj.clickObj, false );
+})
 </script>
 
 <template lang="pug">

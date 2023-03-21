@@ -1,19 +1,20 @@
 <script setup lang="ts">
-import ThreeD from "../utils/threeTest";
+import ThreeD from "../utils/threeCamera";
 const dom = ref<HTMLElement | null>(null);
 
-let threeObj:any = {}
+let threeObj: any = {};
 
 onMounted(() => {
   threeObj = new ThreeD(8, 50, 60, 8, 50);
   dom.value && threeObj.initThree(dom.value);
   // 给模型绑定事件
-  window.addEventListener( 'pointerdown', threeObj.clickObj, false );
+  window.addEventListener("click", threeObj.clickObj, false);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener( 'pointerdown', threeObj.clickObj, false );
-})
+  // pointerdown
+  window.removeEventListener("click", threeObj.clickObj, false);
+});
 </script>
 
 <template lang="pug">

@@ -27,6 +27,10 @@ export default class ThreeD {
   private modelSpeed: Number; // 旋转速度
   private screenWidth: Number; // 旋转速度
   private screenHeight: Number; // 旋转速度
+  private raycaster: any; // 光线投射用于进行鼠标拾取
+  private mouse: any; // 二维向量是一对有顺序的数字（标记为x和y）
+  private cameraPosition: any; // 测试相机位置
+  private cameraTarget: any; // 测试相机视角
   constructor(
     cameraX: Number,
     cameraY: Number,
@@ -39,8 +43,16 @@ export default class ThreeD {
     this.cameraZ = cameraZ;
     this.objSize = objSize;
     this.modelSpeed = modelSpeed;
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
     this.screenWidth = 0;
     this.screenHeight = 0;
+    // this.cameraPosition = [
+    //   { radius: 5, phi: 0, theta: Math.PI / 4 },
+    //   { radius: 10, phi: Math.PI / 4, theta: Math.PI / 2 },
+    //   { radius: 5, phi: Math.PI / 2, theta: Math.PI },
+    //   { radius: 10, phi: (3 * Math.PI) / 4, theta: (3 * Math.PI) / 2 },
+    // ];
   }
 
   /**
@@ -73,7 +85,7 @@ export default class ThreeD {
     // 设置相机位置(眼睛位置或者说相机篇拍照位置x,y,z)
     this.camera.position.set(600, 300, 100);
     // 设置相机视角的角度
-    this.camera.lookAt(0, 0, 0);
+    this.camera.lookAt(new THREE.Vector3(0,0,5));
 
     // 3.创建组和模型
     this.group = new THREE.Group(); // 组-天目湖
@@ -113,6 +125,9 @@ export default class ThreeD {
 
     // 7. 动画旋转
     this.animate();
+
+    // 初始化相机位置
+    this.setupCameraPosition();
 
     // 场景坐标辅助线（选择性功能）
     const axesHelper = new THREE.AxesHelper(150);
@@ -160,52 +175,6 @@ export default class ThreeD {
         });
 
         this.group2.add(model);
-      },
-      undefined,
-      function (e) {
-        console.error(e);
-      }
-    );
-  }
-
-  /**
-   *  创建glb模型-圆柱体-普通
-   * @param obj 文件名字
-   * @param name 模型名字
-   * @param showFlag 是否展示
-   * @param scale 放大倍数
-   * @param x
-   * @param y
-   * @param z
-   */
-  loadGlbCylinderNormal(
-    obj: string,
-    name: string,
-    showFlag: any,
-    scale: number
-  ) {
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("three/js/libs/draco/gltf/");
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-    loader.load(
-      `model/${obj}`,
-      (gltf) => {
-        const model = gltf.scene;
-        model.position.set(0, 0, 0); // 模型坐标偏移量xyz
-        model.scale.set(scale, scale, scale);
-        model.name = name;
-        model.visible = showFlag;
-
-        model.traverse((object: any) => {
-          if (object.isMesh) {
-            // 开启透明度
-            object.material.transparent = true; //开启透明
-            object.material.opacity = 0.4; //设置透明度
-          }
-        });
-
-        this.group3.add(model);
       },
       undefined,
       function (e) {
@@ -273,17 +242,6 @@ export default class ThreeD {
         const model = gltf.scene;
         model.position.set(0, 0, 0); // 模型坐标偏移量xyz
         model.scale.set(scale, scale, scale);
-        //
-        // model.traverse((child: any) => {
-        //   // 设置线框材质
-        //   if (child.isMesh && child.userData.name !== "backGround") {
-        //     //这个判断模型是楼房还是其他  加载不同的材质
-        //     // 拿到模型线框的Geometry
-        //     this.setCityLineMaterial(child, name, showFlag);
-        //   }
-        //   // 设置线框材质
-        // });
-
         model.name = name;
         model.visible = showFlag;
         this.group.add(model);
@@ -293,192 +251,6 @@ export default class ThreeD {
         console.error(e);
       }
     );
-  }
-
-  // 线条化场景模型
-  setCityLineMaterial(object: any, name: any, showFlag: any) {
-    const edges = new THREE.EdgesGeometry(object.geometry, 1);
-    //设置模型的材质
-    const lineMaterial = new THREE.LineBasicMaterial({
-      // 线的颜色
-      color: "rgba(11, 113, 117, 1)",
-      transparent: true,
-      opacity: object.name === "floor001" ? 0.1 : 1,
-    });
-    //把数据组合起来
-    const lineS = new THREE.LineSegments(edges, lineMaterial);
-    //设置数据的位置
-    lineS.position.set(
-      object.position.x,
-      object.position.y + 0,
-      object.position.z
-    );
-    lineS.name = name;
-    lineS.visible = showFlag;
-    //添加到场景
-    // this.scene.add(lineS);
-    this.group.add(lineS);
-    lineS.rotateY(Math.PI / 2 + 0.15);
-  }
-
-  // 加载cube模型
-  loadCube() {
-    const geometry = new THREE.BoxGeometry(50, 50, 50); // 结构大小x,y,z
-    const material = new THREE.MeshLambertMaterial({
-      color: 0x00ffff, // 颜色
-      transparent: true, // 开启透明
-      opacity: 0.5, // 透明度
-    }); // 材质
-    const cube = new THREE.Mesh(geometry, material);
-    this.scene.add(cube);
-
-    // 设置模型坐标位置（x红，y绿，z蓝）
-    cube.position.set(0, 0, 0);
-
-    // 旋转45度
-    cube.rotateY(Math.PI / 4);
-
-    // 创建一个Group 对象
-    this.group = new THREE.Group();
-    // 把group对象添加到场景中
-    this.scene.add(this.group);
-    this.group.add(cube);
-  }
-
-  // 创建obj模型裸模
-  loadObj() {
-    // 创建一个Group 对象
-    this.group = new THREE.Group();
-    // 把group对象添加到场景中
-    this.scene.add(this.group);
-
-    //创建shader材质
-    const objLoader = new OBJLoader();
-    const mtlLoader = new MTLLoader();
-
-    objLoader.load(`${this.path}${this.objName}`, (obj: any) => {
-      obj.scale.set(this.objSize, this.objSize, this.objSize); //模型缩放
-      // obj.position.set(0, 0, 0); // 设置坐标
-      this.scene.add(obj);
-      this.group.add(obj);
-    });
-  }
-
-  // 场景移除group
-  remGroup() {
-    // this.group.visible = false
-    this.scene.remove(this.group);
-    // this.scene.clear();
-    // console.log('after', this.group)
-  }
-
-  // 隐藏组内模型
-  /**
-   *
-   * @param cName 菜单id
-   */
-  hiddenModel(cName: string) {
-    // console.log('test', cName, typeof cName)
-    // this.group.children.map((item, index) => {
-    //   item.visible = false;
-    //   if (item.name === cName) {
-    //     item.visible = true;
-    //   }
-    // })
-    this.group2.children.map((item: any, index: number) => {
-      item.visible = false;
-      if (item.name === cName) {
-        item.visible = true;
-      }
-    });
-    switch (cName) {
-      case "0":
-        this.group3.position.set(0, 0, 0);
-        this.group4.position.set(0, 0, 0);
-        break;
-      case "1":
-        this.group3.position.set(-75, 0, 230);
-        this.group4.position.set(-75, 0, 230);
-        break;
-      case "2":
-        this.group3.position.set(-230, 0, -10);
-        this.group4.position.set(-230, 0, -10);
-        break;
-      case "3":
-        this.group3.position.set(-80, 0, 0);
-        this.group4.position.set(-80, 0, 0);
-        break;
-      case "4":
-        this.group3.position.set(-160, 0, 125);
-        this.group4.position.set(-160, 0, 125);
-        break;
-      case "5":
-        this.group3.position.set(-235, 0, -70);
-        this.group4.position.set(-235, 0, -70);
-        break;
-    }
-
-    this.group3.children.map((item: any, index: number) => {
-      item.visible = false;
-      if (item.name === cName) {
-        item.visible = true;
-      }
-    });
-  }
-
-  // 终极奥义Threejs内存清除，清的渣都不剩
-  deleteThree() {
-    function disposeChild(mesh: any) {
-      if (mesh instanceof THREE.Mesh) {
-        if (mesh.geometry?.dispose) {
-          mesh.geometry.dispose(); //删除几何体
-        }
-        if (mesh.material?.dispose) {
-          mesh.material.dispose(); //删除材质
-        }
-        if (mesh.material?.texture?.dispose) {
-          mesh.material.texture.dispose();
-        }
-      }
-      if (mesh instanceof THREE.Group) {
-        mesh.clear();
-      }
-      if (mesh instanceof THREE.Object3D) {
-        mesh.clear();
-      }
-    }
-
-    this.scene.traverse((item: any) => {
-      disposeChild(item);
-    });
-    THREE.Cache.clear();
-    this.scene.clear();
-    this.renderer.dispose();
-    this.renderer.forceContextLoss();
-  }
-
-  // 创建obj材质模型
-  loadObjAndMtl() {
-    // 创建一个Group 对象
-    this.group = new THREE.Group();
-    // 把group对象添加到场景中
-    this.scene.add(this.group);
-
-    //创建shader材质
-    const objLoader = new OBJLoader();
-    const mtlLoader = new MTLLoader();
-
-    mtlLoader.load(`${this.path}${this.mtlName}`, (mtl: any) => {
-      // 加载贴图
-      objLoader.setMaterials(mtl);
-
-      objLoader.load(`${this.path}${this.objName}`, (obj: any) => {
-        obj.scale.set(this.objSize, this.objSize, this.objSize); // 模型缩放
-        // obj.position.set(0, 0, 0); // 设置坐标
-        this.scene.add(obj);
-        this.group.add(obj);
-      });
-    });
   }
 
   // 创建光源
@@ -539,6 +311,7 @@ export default class ThreeD {
 
       // 围绕空间Y轴旋转
       // this.group.rotateY(0.03);
+      TWEEN.update();
     };
     renderEvent();
   }
@@ -564,5 +337,88 @@ export default class ThreeD {
     // controls.maxDistance = 800;
     // update函数会执行lookAt方法
     this.controls.update();
+  }
+
+  // 点击模型
+  clickObj = (event: any) => {
+    const myModel = this.scene.getObjectByName("pm");
+    // myModel.rotation.x += 0.1;
+    // myModel.rotation.y += 0.1;
+    console.log("模型", myModel);
+    this.animateCamera();
+  };
+
+  // 移动相机位置
+  positionCamera() {
+    // // 定义相机的初始位置和目标位置
+    // const initialPosition = new THREE.Vector3(600, 300, 100);
+    // const initialTarget = new THREE.Vector3(400, 300, 150);
+    //
+    // // 将相机和控制器的初始位置和目标位置设置为刚才定义的位置
+    // this.camera.position.copy(initialPosition);
+    // this.controls.target.copy(initialTarget);
+    //
+    // // 定义向前移动的距离
+    // const distance = 0;
+    //
+    // // 计算新的相机位置和目标位置
+    // const newPosition = new THREE.Vector3();
+    // const newTarget = new THREE.Vector3();
+    // newPosition
+    //   .copy(this.camera.position)
+    //   .add(this.controls.target)
+    //   .normalize()
+    //   .multiplyScalar(distance)
+    //   .add(this.controls.target);
+    // newTarget.copy(this.controls.target);
+    //
+    // // 将相机和控制器的位置和目标位置设置为新位置
+    // this.camera.position.copy(newPosition);
+    // this.controls.target.copy(newTarget);
+
+    // 计算摄像头在路径上的位置
+    const index = Math.floor(Date.now() * 0.001) % this.cameraPosition.length;
+    const point = this.cameraPosition[index];
+    const position = new THREE.Vector3();
+    position.setFromSphericalCoords(point.radius, point.phi, point.theta);
+    this.camera.position.copy(position);
+
+    // 计算摄像头朝向
+    const target = new THREE.Vector3(0, 0, 0);
+    target.setFromSphericalCoords(point.radius, point.phi, point.theta);
+    this.camera.lookAt(target);
+  }
+
+  setupCameraPosition() {
+    this.cameraPosition = new THREE.Vector3(200, 100, 100);
+    this.cameraTarget = new THREE.Vector3(0, 0, 0);
+  }
+
+  animateCamera() {
+    console.log('test', this.camera)
+    // const tween = new TWEEN.Tween(this.camera.position)
+    //   .to(this.cameraPosition, 2000)
+    //   .easing(TWEEN.Easing.Quadratic.InOut)
+    //   .onUpdate(() => {
+    //     this.camera.lookAt(this.cameraTarget);
+    //   })
+    //   .start();
+
+    // 创建一个目标位置和视角
+    const targetPosition = new THREE.Vector3(-500, 100, 0);
+    const targetLookAt = new THREE.Vector3(0, 0, 0);
+
+    // 创建一个 tween 动画实例，过渡相机位置和视角到目标位置和视角
+    const cameraPositionTween = new TWEEN.Tween(this.camera.position)
+      .to(targetPosition, 2000)
+      .easing(TWEEN.Easing.Quadratic.InOut)
+    const cameraLookAtTween = new TWEEN.Tween(this.camera.rotation)
+      .to({z: 1.5, y: Math.PI/2}, 2000)
+      .easing(TWEEN.Easing.Quadratic.InOut)
+
+    // 设置 tween 动画链，同时执行位置和视角的 tween 动画
+    const cameraTween = new TWEEN.Tween({})
+      .chain(cameraPositionTween, cameraLookAtTween)
+      .start();
   }
 }

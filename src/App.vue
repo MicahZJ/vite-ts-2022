@@ -24,6 +24,7 @@ import MyIcon from "@/assets/logo.svg";
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/three">three3D</RouterLink>
         <RouterLink to="/login">login</RouterLink>
+        <RouterLink to="/tween">tween</RouterLink>
       </nav>
     </div>
   </header>

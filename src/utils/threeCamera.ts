@@ -5,12 +5,14 @@ import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { Water } from 'three/examples/jsm/objects/Water.js';
 
 import * as TWEEN from "@tweenjs/tween.js";
 
 export default class ThreeD {
   private scene: any; // 场景
   private camera: any; // 相机
+  private water: any; // 水面
   private renderer: any; // 渲染器
   private group: any; // 新的组对象，控制模型
   private group2: any; // 圆柱体模组
@@ -31,6 +33,7 @@ export default class ThreeD {
   private mouse: any; // 二维向量是一对有顺序的数字（标记为x和y）
   private cameraPosition: any; // 测试相机位置
   private cameraTarget: any; // 测试相机视角
+  private beIntersectObjects: Array<any> = []; // 存放需要射线检测的物体数组
   constructor(
     cameraX: Number,
     cameraY: Number,
@@ -47,12 +50,6 @@ export default class ThreeD {
     this.mouse = new THREE.Vector2();
     this.screenWidth = 0;
     this.screenHeight = 0;
-    // this.cameraPosition = [
-    //   { radius: 5, phi: 0, theta: Math.PI / 4 },
-    //   { radius: 10, phi: Math.PI / 4, theta: Math.PI / 2 },
-    //   { radius: 5, phi: Math.PI / 2, theta: Math.PI },
-    //   { radius: 10, phi: (3 * Math.PI) / 4, theta: (3 * Math.PI) / 2 },
-    // ];
   }
 
   /**
@@ -83,9 +80,9 @@ export default class ThreeD {
     // 2. 创建相机对象fov 代表视角\aspect 宽高比\near 最近看到\far 最远看到
     this.camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 200000);
     // 设置相机位置(眼睛位置或者说相机篇拍照位置x,y,z)
-    this.camera.position.set(600, 300, 100);
-    // 设置相机视角的角度
-    this.camera.lookAt(new THREE.Vector3(0,0,5));
+    this.camera.position.set(400, 300, 0);
+    // 设置相机视角的角度,现在这个设置是无效的，是由于引用了OrbitControls控件，相机的lookAt 被OrbitControls控件更改
+    // this.camera.lookAt(new THREE.Vector3(0,0,5));
 
     // 3.创建组和模型
     this.group = new THREE.Group(); // 组-天目湖
@@ -94,19 +91,21 @@ export default class ThreeD {
     this.group4 = new THREE.Group(); // 组-天目湖-光标
 
     // 创建cube简单模型
-    this.loadGlb("plane.glb", "pm", true, 1); // 平面
+    this.loadGlb("plane.glb", "pingmian", true, 1); // 平面
 
     // 创建光圈-总的
-    this.loadGlbCylinder("Cylinder2.glb", "cycle", true, 10, 0, 0, 0);
+    this.loadGlbCylinder("Cylinder2.glb", "cyclebig", true, 10, 0, 0, 0);
 
     // 标注点
-    this.loadGlbPoint("biaozhi.glb", "dian", true, 20);
+    this.loadGlbPoint("biaozhi.glb", "dianwei", true, 50);
 
     // 把group对象添加到场景中
     this.scene.add(this.group);
     this.scene.add(this.group2);
     this.scene.add(this.group3);
     this.scene.add(this.group4);
+
+    this.createWater()
 
     // 4. 创建光源
     this.createPoint();
@@ -125,9 +124,6 @@ export default class ThreeD {
 
     // 7. 动画旋转
     this.animate();
-
-    // 初始化相机位置
-    this.setupCameraPosition();
 
     // 场景坐标辅助线（选择性功能）
     const axesHelper = new THREE.AxesHelper(150);
@@ -165,7 +161,6 @@ export default class ThreeD {
         model.scale.set(scale, scale, scale);
         model.name = name;
         model.visible = showFlag;
-
         model.traverse((object: any) => {
           if (object.isMesh) {
             // 开启透明度
@@ -173,8 +168,8 @@ export default class ThreeD {
             object.material.opacity = 0.3; //设置透明度
           }
         });
-
         this.group2.add(model);
+        this.beIntersectObjects.push(model);
       },
       undefined,
       function (e) {
@@ -184,7 +179,7 @@ export default class ThreeD {
   }
 
   /**
-   *  创建glb模型-圆柱体-普通
+   *  创建glb模型-光标
    * @param obj 文件名字
    * @param name 模型名字
    * @param showFlag 是否展示
@@ -206,7 +201,6 @@ export default class ThreeD {
         model.scale.set(scale, scale, scale);
         model.name = name;
         model.visible = showFlag;
-
         model.traverse((object: any) => {
           if (object.isMesh) {
             // 开启透明度
@@ -214,8 +208,8 @@ export default class ThreeD {
             object.material.opacity = 1; //设置透明度
           }
         });
-
         this.group4.add(model);
+        this.beIntersectObjects.push(model);
       },
       undefined,
       function (e) {
@@ -225,7 +219,7 @@ export default class ThreeD {
   }
 
   /**
-   * 创建glb模型-附带地图发光解析
+   * 创建glb模型-地面
    * @param obj 文件名字
    * @param name 模型名字
    * @param showFlag 是否展示
@@ -240,11 +234,19 @@ export default class ThreeD {
       `model/${obj}`,
       (gltf) => {
         const model = gltf.scene;
-        model.position.set(0, 0, 0); // 模型坐标偏移量xyz
+        model.position.set(0, 10, 0); // 模型坐标偏移量xyz
         model.scale.set(scale, scale, scale);
         model.name = name;
         model.visible = showFlag;
+        model.traverse((object: any) => {
+          if (object.isMesh) {
+            // 开启透明度
+            object.material.transparent = true; //开启透明
+            object.material.opacity = .6; //设置透明度
+          }
+        });
         this.group.add(model);
+        this.beIntersectObjects.push(model);
       },
       undefined,
       function (e) {
@@ -277,17 +279,41 @@ export default class ThreeD {
     // this.scene.add(directionalLight);
   }
 
+  // 创建水面
+  createWater() {
+    // Water
+    const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+
+    this.water = new Water(
+      waterGeometry,
+      {
+        textureWidth: 512,
+        textureHeight: 512,
+        waterNormals: new THREE.TextureLoader().load( 'model/waternormals.jpg', function ( texture ) {
+
+          texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+        } ),
+        sunDirection: new THREE.Vector3(),
+        sunColor: 0xffffff,
+        waterColor: 0x001e0f,
+        distortionScale: 3.7,
+        fog: this.scene.fog !== undefined
+      }
+    );
+
+    this.water.rotation.x = - Math.PI / 2;
+
+    this.scene.add( this.water );
+  }
+
   // 动画效果
   animate() {
     const clock = new THREE.Clock();
-
     // 渲染
     const renderEvent = () => {
-      // const spt = clock.getDelta() * 1000; // 毫秒
-      // console.log("一帧的时间:毫秒", spt);
-      // console.log("帧率FPS", 1000 / spt);
 
-      //循环调用函数，请求再次执行渲染函数render，渲染下一帧
+      //循环调用函，请求再次执行渲染函数render，渲染下一帧
       requestAnimationFrame(renderEvent);
       // 将场景和摄像机传入到渲染器中
       this.renderer.render(this.scene, this.camera);
@@ -309,28 +335,39 @@ export default class ThreeD {
       const time = Date.now() * 0.005;
       this.group4.position.y = Math.cos(time) * 1.75 + 2.25;
 
+      // angle += 0.005
+      // // 重新设置相机位置，相机在XY平面绕着坐标原点旋转运动
+      // this.camera.position.x= 200*Math.sin(angle)
+      // this.camera.position.z= 200*Math.cos(angle)
+      // 固定相机视角，旋转的时候也不变
+      this.camera.lookAt(new THREE.Vector3(0,0,5));
+
       // 围绕空间Y轴旋转
-      // this.group.rotateY(0.03);
+      // this.group.rotateY(0.01);
       TWEEN.update();
+
+      // 水面特效
+      this.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
     };
     renderEvent();
   }
 
   // 创建控件对象
   createControls() {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement); //创建控件对象
+    //创建控件对象
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = false;
     // 禁止缩放
     this.controls.enableZoom = true;
     // 允许场景自动旋转
-    // this.controls.autoRotate = true;
+    this.controls.autoRotate = false;
     // 禁止手动旋转
     this.controls.enableRotate = true;
     this.controls.autoRotateSpeed = this.modelSpeed;
     // 禁止右键拖拽
     this.controls.enablePan = false;
     // 控制相机观察视角
-    this.controls.target.set(0, 100, 50);
+    this.controls.target.set(0, 0, 5);
     //相机距离观察目标点极小距离——模型最大状态
     // controls.minDistance = 500;
     //相机距离观察目标点极大距离——模型最小状态
@@ -341,84 +378,45 @@ export default class ThreeD {
 
   // 点击模型
   clickObj = (event: any) => {
-    const myModel = this.scene.getObjectByName("pm");
-    // myModel.rotation.x += 0.1;
-    // myModel.rotation.y += 0.1;
-    console.log("模型", myModel);
-    this.animateCamera();
+
+    //将鼠标点击位置的屏幕坐标转换成threejs中的标准坐标
+    this.mouse.x = (event.clientX/Number(this.screenWidth))*2-1
+    this.mouse.y = -((event.clientY/Number(this.screenHeight))*2-1)
+
+    // 通过鼠标点的位置和当前相机的矩阵计算出raycaster
+    this.raycaster.setFromCamera( this.mouse, this.camera );
+
+    // 获取raycaster直线和所有模型相交的数组集合
+    const intersects = this.raycaster.intersectObjects(this.beIntersectObjects, true);
+    console.log('数组集合', intersects);
+
+    if (intersects.length > 0) { //碰到东西，文档说距离排序，因此最近的为第一个。
+      const object = intersects[0].object
+      console.log('当前点击对象', object)
+      object.material.color.set( 0xff0000 );
+      // 如果是指定模型，进行视角选择操作
+      if (object.name == 'Cone001') this.animateCamera();
+    }
+
+    //将所有的相交的模型的颜色设置为红色
+    // for ( let i = 0; i < intersects.length; i++ ) {
+    //   intersects[i].object.material.color.set( 0xff0000 );
+    // }
   };
 
-  // 移动相机位置
-  positionCamera() {
-    // // 定义相机的初始位置和目标位置
-    // const initialPosition = new THREE.Vector3(600, 300, 100);
-    // const initialTarget = new THREE.Vector3(400, 300, 150);
-    //
-    // // 将相机和控制器的初始位置和目标位置设置为刚才定义的位置
-    // this.camera.position.copy(initialPosition);
-    // this.controls.target.copy(initialTarget);
-    //
-    // // 定义向前移动的距离
-    // const distance = 0;
-    //
-    // // 计算新的相机位置和目标位置
-    // const newPosition = new THREE.Vector3();
-    // const newTarget = new THREE.Vector3();
-    // newPosition
-    //   .copy(this.camera.position)
-    //   .add(this.controls.target)
-    //   .normalize()
-    //   .multiplyScalar(distance)
-    //   .add(this.controls.target);
-    // newTarget.copy(this.controls.target);
-    //
-    // // 将相机和控制器的位置和目标位置设置为新位置
-    // this.camera.position.copy(newPosition);
-    // this.controls.target.copy(newTarget);
-
-    // 计算摄像头在路径上的位置
-    const index = Math.floor(Date.now() * 0.001) % this.cameraPosition.length;
-    const point = this.cameraPosition[index];
-    const position = new THREE.Vector3();
-    position.setFromSphericalCoords(point.radius, point.phi, point.theta);
-    this.camera.position.copy(position);
-
-    // 计算摄像头朝向
-    const target = new THREE.Vector3(0, 0, 0);
-    target.setFromSphericalCoords(point.radius, point.phi, point.theta);
-    this.camera.lookAt(target);
-  }
-
-  setupCameraPosition() {
-    this.cameraPosition = new THREE.Vector3(200, 100, 100);
-    this.cameraTarget = new THREE.Vector3(0, 0, 0);
-  }
-
   animateCamera() {
-    console.log('test', this.camera)
-    // const tween = new TWEEN.Tween(this.camera.position)
-    //   .to(this.cameraPosition, 2000)
-    //   .easing(TWEEN.Easing.Quadratic.InOut)
-    //   .onUpdate(() => {
-    //     this.camera.lookAt(this.cameraTarget);
-    //   })
-    //   .start();
-
     // 创建一个目标位置和视角
-    const targetPosition = new THREE.Vector3(-500, 100, 0);
+    const targetPosition = new THREE.Vector3(100, 150, 100);
     const targetLookAt = new THREE.Vector3(0, 0, 0);
 
     // 创建一个 tween 动画实例，过渡相机位置和视角到目标位置和视角
     const cameraPositionTween = new TWEEN.Tween(this.camera.position)
       .to(targetPosition, 2000)
       .easing(TWEEN.Easing.Quadratic.InOut)
-    const cameraLookAtTween = new TWEEN.Tween(this.camera.rotation)
-      .to({z: 1.5, y: Math.PI/2}, 2000)
-      .easing(TWEEN.Easing.Quadratic.InOut)
 
     // 设置 tween 动画链，同时执行位置和视角的 tween 动画
     const cameraTween = new TWEEN.Tween({})
-      .chain(cameraPositionTween, cameraLookAtTween)
+      .chain(cameraPositionTween)
       .start();
   }
 }

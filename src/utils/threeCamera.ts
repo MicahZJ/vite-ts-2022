@@ -5,7 +5,8 @@ import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { Water } from 'three/examples/jsm/objects/Water.js';
+import { Water } from "three/examples/jsm/objects/Water.js";
+import Stats from "three/examples/jsm/libs/stats.module.js";
 
 import * as TWEEN from "@tweenjs/tween.js";
 
@@ -16,7 +17,6 @@ export default class ThreeD {
   private renderer: any; // 渲染器
   private group: any; // 新的组对象，控制模型
   private group2: any; // 圆柱体模组
-  private group3: any; // 圆柱体模组-普通点
   private group4: any; // 点位模型
   private controls: any; // 创建控件对象
   private path: any; // 路径
@@ -33,6 +33,7 @@ export default class ThreeD {
   private mouse: any; // 二维向量是一对有顺序的数字（标记为x和y）
   private cameraPosition: any; // 测试相机位置
   private cameraTarget: any; // 测试相机视角
+  private stats: any; // 性能监测
   private beIntersectObjects: Array<any> = []; // 存放需要射线检测的物体数组
   constructor(
     cameraX: Number,
@@ -57,6 +58,9 @@ export default class ThreeD {
    * @param instance 容器dom
    */
   initThree(instance: HTMLElement | null) {
+    const container = document.createElement("div");
+    instance && instance.appendChild(container);
+
     // 场景宽高
     const width: any = instance && instance.clientWidth;
     const height: any = instance && instance.clientHeight;
@@ -66,14 +70,16 @@ export default class ThreeD {
     // 1. 创建场景对象Scene
     this.scene = new THREE.Scene();
     // 创建场景背景贴图
-    const textureCube = new THREE.CubeTextureLoader().load([
-      "model/1.jpg",
-      "model/2.jpg",
-      "model/3.jpg",
-      "model/4.jpg",
-      "model/5.jpg",
-      "model/6.jpg",
-    ]);
+    const textureCube = new THREE.CubeTextureLoader()
+      .setPath("model/hdr/")
+      .load([
+        "px.png",
+        "nx.png",
+        "py.png",
+        "ny.png",
+        "pz.png",
+        "nz.png",
+      ]);
     // 作为背景贴图
     this.scene.background = textureCube;
 
@@ -85,10 +91,9 @@ export default class ThreeD {
     // this.camera.lookAt(new THREE.Vector3(0,0,5));
 
     // 3.创建组和模型
-    this.group = new THREE.Group(); // 组-天目湖
-    this.group2 = new THREE.Group(); // 组-天目湖-总光圈
-    this.group3 = new THREE.Group(); // 组-天目湖-普通光圈
-    this.group4 = new THREE.Group(); // 组-天目湖-光标
+    this.group = new THREE.Group(); // 组-平面
+    this.group2 = new THREE.Group(); // 组-光圈
+    this.group4 = new THREE.Group(); // 组-光标
 
     // 创建cube简单模型
     this.loadGlb("plane.glb", "pingmian", true, 1); // 平面
@@ -98,14 +103,15 @@ export default class ThreeD {
 
     // 标注点
     this.loadGlbPoint("biaozhi.glb", "dianwei", true, 50);
+    // C:\Windows\System32\cmd.exe /c "SET RENDERDOC_HOOK_EGL=0 && START "" ^"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe^" --disable-gpu-sandbox --gpu-startup-dialog"
+    // C:\Windows\System32\cmd.exe /c "SET RENDERDOC_HOOK_EGL=0 && START "" ^"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe^" --disable-gpu-sandbox --gpu-startup-dialog"
 
     // 把group对象添加到场景中
     this.scene.add(this.group);
     this.scene.add(this.group2);
-    this.scene.add(this.group3);
     this.scene.add(this.group4);
 
-    this.createWater()
+    this.createWater();
 
     // 4. 创建光源
     this.createPoint();
@@ -122,12 +128,15 @@ export default class ThreeD {
     // 6. 创建控制器
     this.createControls();
 
-    // 7. 动画旋转
-    this.animate();
+    // 性能监测
+    this.initStats(container);
 
     // 场景坐标辅助线（选择性功能）
     const axesHelper = new THREE.AxesHelper(150);
     this.scene.add(axesHelper);
+
+    // 7. 动画旋转
+    this.animate();
   }
   // 创建glb模型-圆柱体
   /**
@@ -242,7 +251,7 @@ export default class ThreeD {
           if (object.isMesh) {
             // 开启透明度
             object.material.transparent = true; //开启透明
-            object.material.opacity = .6; //设置透明度
+            object.material.opacity = 0.6; //设置透明度
           }
         });
         this.group.add(model);
@@ -282,29 +291,27 @@ export default class ThreeD {
   // 创建水面
   createWater() {
     // Water
-    const waterGeometry = new THREE.PlaneGeometry( 10000, 10000 );
+    const waterGeometry = new THREE.PlaneGeometry(10000, 10000);
 
-    this.water = new Water(
-      waterGeometry,
-      {
-        textureWidth: 512,
-        textureHeight: 512,
-        waterNormals: new THREE.TextureLoader().load( 'model/waternormals.jpg', function ( texture ) {
-
+    this.water = new Water(waterGeometry, {
+      textureWidth: 512,
+      textureHeight: 512,
+      waterNormals: new THREE.TextureLoader().load(
+        "model/waternormals.jpg",
+        function (texture) {
           texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        }
+      ),
+      sunDirection: new THREE.Vector3(),
+      sunColor: 0xffffff,
+      waterColor: 0x001e0f,
+      distortionScale: 3.7,
+      fog: this.scene.fog !== undefined,
+    });
 
-        } ),
-        sunDirection: new THREE.Vector3(),
-        sunColor: 0xffffff,
-        waterColor: 0x001e0f,
-        distortionScale: 3.7,
-        fog: this.scene.fog !== undefined
-      }
-    );
+    this.water.rotation.x = -Math.PI / 2;
 
-    this.water.rotation.x = - Math.PI / 2;
-
-    this.scene.add( this.water );
+    this.scene.add(this.water);
   }
 
   // 动画效果
@@ -312,7 +319,6 @@ export default class ThreeD {
     const clock = new THREE.Clock();
     // 渲染
     const renderEvent = () => {
-
       //循环调用函，请求再次执行渲染函数render，渲染下一帧
       requestAnimationFrame(renderEvent);
       // 将场景和摄像机传入到渲染器中
@@ -340,14 +346,17 @@ export default class ThreeD {
       // this.camera.position.x= 200*Math.sin(angle)
       // this.camera.position.z= 200*Math.cos(angle)
       // 固定相机视角，旋转的时候也不变
-      this.camera.lookAt(new THREE.Vector3(0,0,5));
+      this.camera.lookAt(new THREE.Vector3(0, 0, 5));
+
+      // 更新帧数
+      this.stats.update();
 
       // 围绕空间Y轴旋转
       // this.group.rotateY(0.01);
       TWEEN.update();
 
       // 水面特效
-      this.water.material.uniforms[ 'time' ].value += 1.0 / 60.0;
+      this.water.material.uniforms["time"].value += 1.0 / 60.0;
     };
     renderEvent();
   }
@@ -378,24 +387,27 @@ export default class ThreeD {
 
   // 点击模型
   clickObj = (event: any) => {
-
     //将鼠标点击位置的屏幕坐标转换成threejs中的标准坐标
-    this.mouse.x = (event.clientX/Number(this.screenWidth))*2-1
-    this.mouse.y = -((event.clientY/Number(this.screenHeight))*2-1)
+    this.mouse.x = (event.clientX / Number(this.screenWidth)) * 2 - 1;
+    this.mouse.y = -((event.clientY / Number(this.screenHeight)) * 2 - 1);
 
     // 通过鼠标点的位置和当前相机的矩阵计算出raycaster
-    this.raycaster.setFromCamera( this.mouse, this.camera );
+    this.raycaster.setFromCamera(this.mouse, this.camera);
 
     // 获取raycaster直线和所有模型相交的数组集合
-    const intersects = this.raycaster.intersectObjects(this.beIntersectObjects, true);
-    console.log('数组集合', intersects);
+    const intersects = this.raycaster.intersectObjects(
+      this.beIntersectObjects,
+      true
+    );
+    console.log("数组集合", intersects);
 
-    if (intersects.length > 0) { //碰到东西，文档说距离排序，因此最近的为第一个。
-      const object = intersects[0].object
-      console.log('当前点击对象', object)
-      object.material.color.set( 0xff0000 );
+    if (intersects.length > 0) {
+      //碰到东西，文档说距离排序，因此最近的为第一个。
+      const object = intersects[0].object;
+      console.log("当前点击对象", object);
+      object.material.color.set(0xff0000);
       // 如果是指定模型，进行视角选择操作
-      if (object.name == 'Cone001') this.animateCamera();
+      if (object.name == "Cone001") this.animateCamera();
     }
 
     //将所有的相交的模型的颜色设置为红色
@@ -412,11 +424,19 @@ export default class ThreeD {
     // 创建一个 tween 动画实例，过渡相机位置和视角到目标位置和视角
     const cameraPositionTween = new TWEEN.Tween(this.camera.position)
       .to(targetPosition, 2000)
-      .easing(TWEEN.Easing.Quadratic.InOut)
+      .easing(TWEEN.Easing.Quadratic.InOut);
 
     // 设置 tween 动画链，同时执行位置和视角的 tween 动画
-    const cameraTween = new TWEEN.Tween({})
-      .chain(cameraPositionTween)
-      .start();
+    const cameraTween = new TWEEN.Tween({}).chain(cameraPositionTween).start();
+  }
+
+  // 开启性能监测
+  initStats(container: any) {
+    this.stats = new (Stats as any)();
+    this.stats.setMode(0);
+    this.stats.domElement.style.position = "absolute";
+    this.stats.domElement.style.left = "0px";
+    this.stats.domElement.style.top = "0px";
+    container.appendChild(this.stats.domElement);
   }
 }

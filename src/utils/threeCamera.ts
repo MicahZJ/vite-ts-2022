@@ -96,7 +96,7 @@ export default class ThreeD {
     this.group4 = new THREE.Group(); // 组-光标
 
     // 创建cube简单模型
-    this.loadGlb("plane.glb", "pingmian", true, 1); // 平面
+    this.loadGlb("plane22.glb", "pingmian", true, 100); // 平面
 
     // 创建光圈-总的
     this.loadGlbCylinder("Cylinder2.glb", "cyclebig", true, 10, 0, 0, 0);
@@ -243,7 +243,7 @@ export default class ThreeD {
       `model/${obj}`,
       (gltf) => {
         const model = gltf.scene;
-        model.position.set(0, 10, 0); // 模型坐标偏移量xyz
+        model.position.set(0, 1, 0); // 模型坐标偏移量xyz
         model.scale.set(scale, scale, scale);
         model.name = name;
         model.visible = showFlag;
@@ -251,7 +251,7 @@ export default class ThreeD {
           if (object.isMesh) {
             // 开启透明度
             object.material.transparent = true; //开启透明
-            object.material.opacity = 0.6; //设置透明度
+            object.material.opacity = 1; //设置透明度
           }
         });
         this.group.add(model);

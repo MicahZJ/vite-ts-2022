@@ -251,7 +251,8 @@ export default class ThreeD {
           if (object.isMesh) {
             // 开启透明度
             object.material.transparent = true; //开启透明
-            object.material.opacity = 0.6; //设置透明度
+            object.material.opacity = 1; //设置透明度
+            // object.material.color = new THREE.Color('#000000'); //设置透明度
           }
         });
         this.group.add(model);
@@ -323,6 +324,8 @@ export default class ThreeD {
       requestAnimationFrame(renderEvent);
       // 将场景和摄像机传入到渲染器中
       this.renderer.render(this.scene, this.camera);
+      // 解决加载gltf格式模型纹理贴图和原图不一样问题
+      this.renderer.outputEncoding = THREE.sRGBEncoding;
       // 围绕物体y轴自转
       // this.group.rotation.y -= 0.002;
 
